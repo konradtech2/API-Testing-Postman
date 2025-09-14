@@ -45,4 +45,4 @@ This project covers the full lifecycle of a user and their content on the platfo
 
 * **Postman Collection:**
     * The complete Postman collection with all requests and automated tests can be found in this repository. You can import it directly into Postman.
-    * [Conduit-API-Tests.postman_collection.json](./Conduit-API-Tests.postman_collection.json)
+    * [Conduit-API-Tests.postman_collection.json](./Conduit API Testing.postman_collection.json)
