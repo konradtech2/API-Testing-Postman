@@ -1,0 +1,630 @@
+{
+	"info": {
+		"_postman_id": "37c43bae-1b82-41b7-befe-015467bce4cb",
+		"name": "Conduit API Testing",
+		"description": "This project showcases a comprehensive approach to API testing for the Conduit web application, a Medium.com clone. The entire testing process, from initial analysis to test execution and light automation, was performed using Postman.\n\n\\## Objective  \nThe primary goal of this project is to demonstrate a systematic and professional QA process for testing a REST API. This includes:  \n\\* Analyzing API behavior based on network traffic.  \n\\* Creating a structured test collection in Postman.  \n\\* Writing automated checks for key functionalities.  \n\\* Managing test data and authentication flows.EndFragment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48232233",
+		"_collection_link": "https://www.postman.com/konradtech2-9556651/workspace/projects/collection/48232233-37c43bae-1b82-41b7-befe-015467bce4cb?action=share&source=collection_link&creator=48232233"
+	},
+	"item": [
+		{
+			"name": "Creating New User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.clear();\r",
+							"pm.variables.set(\"username\", pm.collectionVariables.replaceIn(\"{{$randomUserName}}\"));\r",
+							"pm.variables.set(\"E-mail\", pm.collectionVariables.replaceIn(\"{{$randomEmail}}\"));\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.set(\"usernameConduit\", pm.response.json().user.username); // So i'm setting the username as a collection variable for future requests.\r",
+							"\r",
+							"\r",
+							"pm.collectionVariables.set('emailConduit', pm.response.json().user.email) // And finally i'm doing exact same thing for email.\r",
+							"\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"}); //Simple test providing a basic check to ensure the request was successful.\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user\": {\r\n        \"username\": \"{{username}}\",\r\n        \"email\": \"{{E-mail}}\",\r\n        \"password\": \"{{password}}\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/users",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				},
+				"description": "**Purpose:**\n\nRegister a new user in the system.\n\n**What happens here:**\n\n- A random `username` and `email` are generated in the **Pre-request Script**.\n    \n- These values are used in the request body to create the user.\n    \n- The response stores `usernameConduit` and `emailConduit` as collection variables for future requests.\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`."
+			},
+			"response": []
+		},
+		{
+			"name": "Logging into created Account",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.set('tokenConduit', pm.response.json().user.token); //I'm storing the token in a collection variable for later use.\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"pm.test(\"JSON has the same keys as found during network analysis\", function () {\r",
+							"    pm.response.to.have.jsonBody('user.username')\r",
+							"    .and.to.have.jsonBody('user.email')\r",
+							"    .and.to.have.jsonBody('user.token')\r",
+							"    .and.to.have.jsonBody('user.bio')\r",
+							"    .and.to.have.jsonBody('user.image');\r",
+							"}) // So basically I'm checking if the response has the same keys as the ones I found during network analysis.\r",
+							"\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user\": {\r\n        \"email\": \"{{emailConduit}}\",\r\n        \"password\": \"{{password}}\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/users/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"users",
+						"login"
+					]
+				},
+				"description": "**Purpose:**  \n  \nLog in to an existing user account to obtain authentication credentials.\n\n**What happens here:**\n\n- The user provides `email` and `password` in the request body.\n    \n- After a successful login, the response stores `tokenConduit` as a collection variable for use in future requests.\n    \n- Response is verified against known keys from network analysis to ensure it contains all expected fields (`username`, `email`, `token`, `bio`, `image`).\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`.\n    \n- Confirm the response JSON contains the expected keys as found during network analysis"
+			},
+			"response": []
+		},
+		{
+			"name": "Creating an Article",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.clear();\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"JSON contains a slug key\", function () {\r",
+							"    pm.expect(pm.response.json().article).to.have.property('slug')\r",
+							"})  //I'm checking if the response contains a slug key which will be used in future tests.\r",
+							"\r",
+							"pm.collectionVariables.set(\"slugConduit\", pm.response.json().article.slug) // If it's true i want to store the slug value in a collection variable.\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"pm.test(\"Article title is created using correct values\", function () {\r",
+							"pm.expect(pm.response.json().article.title).to.be.a(\"string\");\r",
+							"}) //Basic test to check if the title is a string.\r",
+							"\r",
+							"pm.test('Article body is not empty', function () {\r",
+							"    pm.expect(pm.response.json().article.body).to.not.be.empty;\r",
+							"}) // I'm checking if the description of the article is not empty."
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"description": "The token is needed to authorise and continue work.",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"article\": {\r\n        \"title\": \"GitHub Project!\",\r\n        \"description\": \"Take a look!\",\r\n        \"body\": \"I love to learning and developing my skills :D\",\r\n        \"tagList\": []\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/articles",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"articles"
+					]
+				},
+				"description": "**Purpose:**\n\nCreate a new article in the system.\n\n**What happens here:**\n\n- The request body contains article data such as `title`, `description`, `body`, and optional `tagList`.\n    \n- After creation, the response is checked to ensure it contains a `slug` key.\n    \n- The `slug` is stored as a collection variable (`slugConduit`) for use in future requests.\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`.\n    \n- Check that the JSON contains the `slug` key.\n    \n- Ensure the article `title` is a string."
+			},
+			"response": []
+		},
+		{
+			"name": "Updating an Article",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"pm.test(\"Response time is less than 500ms\", function () {\r",
+							"    pm.expect(pm.response.responseTime).to.be.below(400);\r",
+							"}); // I'm checking if the response time is less than 500ms. And base of the results we can decide if the API is performing well or not."
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.clear();"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"article\": {\r\n        \"title\": \"GitHub Project [Edited]!\",\r\n        \"description\": \"I did change this title and that description from api\",\r\n        \"body\": \"Like i just said, i love learning!\",\r\n        \"tagList\": []\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/articles/{{slugConduit}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"articles",
+						"{{slugConduit}}"
+					]
+				},
+				"description": "**Purpose:**\n\nUpdate an existing article using its `slug`.\n\n**What happens here:**\n\n- The request body contains updated article data such as `title`, `description`, `body`, and optional `tagList`.\n    \n- The `slug` of the article (`slugConduit`) is used from a collection variable to identify which article to update.\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`.\n    \n- Check that the response time is below 500ms to ensure the API performs efficiently."
+			},
+			"response": []
+		},
+		{
+			"name": "Adding comment to Article",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"pm.test(\"Comment id contains numbers\", function () {\r",
+							"    pm.expect(pm.response.json().comment.id).to.be.a('number');\r",
+							"}) // This test checks if the comment id is correctly implemented and contains a number\r",
+							"\r",
+							"\r",
+							"pm.collectionVariables.set(\"commentID\", pm.response.json().comment.id);\r",
+							"// So i'm collecting the comment id from the response and setting it as a collection variable so i can use it later in case of deleting the comment :).\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"comment\": {\r\n        \"body\": \"Great Post! Keep it up!\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/articles/{{slugConduit}}/comments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"articles",
+						"{{slugConduit}}",
+						"comments"
+					]
+				},
+				"description": "**Purpose:**  \n  \nAdd a comment to a specific article.\n\n**What happens here:**\n\n- The request body contains the comment text to be added.\n    \n- After creation, the response is checked to ensure the `comment.id` is correctly generated.\n    \n- The `comment.id` is stored as a collection variable (`commentID`) for use in future requests, such as deleting the comment.\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`.\n    \n- Ensure the `comment.id` is a number."
+			},
+			"response": []
+		},
+		{
+			"name": "Deleting the Comment",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {\r",
+							"    pm.response.to.have.status(204);\r",
+							"})"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/articles/{{slugConduit}}/comments/{{commentID}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"articles",
+						"{{slugConduit}}",
+						"comments",
+						"{{commentID}}"
+					]
+				},
+				"description": "**Purpose:**  \n  \nDelete a previously added comment from a specific article.\n\n**What happens here:**\n\n- The `commentID` stored in a collection variable is used to identify which comment to delete.\n    \n- The API processes the deletion and returns an empty response.\n    \n\n**Tests:**\n\n- Verify the response status code is `204 No Content`, indicating successful deletion."
+			},
+			"response": []
+		},
+		{
+			"name": "Following the User",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"pm.test(\"User is followed\", function () {\r",
+							"    pm.expect(pm.response.json().profile.following).to.be.true;\r",
+							"}) // I'm checking if the action was successful and the user is now followed."
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/profiles/rod_russel37/follow",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"profiles",
+						"rod_russel37",
+						"follow"
+					]
+				},
+				"description": "**Purpose:**  \n  \nFollow a specific user to add them to the authenticated user's following list.\n\n**What happens here:**\n\n- The request uses the target user's `username` and the authenticated user's token.\n    \n- The API processes the follow action and updates the user's profile status.\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`.\n    \n- Ensure the `profile.following` property is `true`, confirming the user is successfully followed."
+			},
+			"response": []
+		},
+		{
+			"name": "Unfollowing the User",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"pm.test('User is correctly unfollowed', function () {\r",
+							"    pm.expect(pm.response.json().profile.following).to.be.false;\r",
+							"}) // Right now, I'm unfollowing a user who was recently followed by me."
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/profiles/rod_russel37/follow",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"profiles",
+						"rod_russel37",
+						"follow"
+					]
+				},
+				"description": "**Purpose:**  \n  \nUnfollow a specific user to remove them from the authenticated user's following list.\n\n**What happens here:**\n\n- The request uses the target user's `username` and the authenticated user's token.\n    \n- The API processes the unfollow action and updates the user's profile status accordingly.\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`.\n    \n- Ensure the `profile.following` property is `false`, confirming the user is successfully unfollowed."
+			},
+			"response": []
+		},
+		{
+			"name": "Getting profile informations",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"pm.test('Username is correct', function () {\r",
+							"    const expectedUsername = pm.collectionVariables.get(\"usernameConduit\")   \r",
+							"    pm.expect(pm.response.json().profile.username).to.eql(expectedUsername);\r",
+							"}) // So the test checks if the username in the response matches the username in the environment variable from which i am trying get informations about."
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/profiles/{{usernameConduit}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"profiles",
+						"{{usernameConduit}}"
+					]
+				},
+				"description": "**Purpose:**  \n  \nRetrieve the public profile information of a specific user.\n\n**What happens here:**\n\n- The request uses the target user's `username`.\n    \n- The API returns the profile data including `username`, `bio`, `image`, and `following` status.\n    \n- The response is compared to the stored collection variable (`usernameConduit`) to ensure correct user data is returned.\n    \n\n**Tests:**\n\n- Verify the response status code is `200 OK`.\n    \n- Check that the `profile.username` matches the expected username stored in the collection variable."
+			},
+			"response": []
+		},
+		{
+			"name": "Deleting an Article",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 204 No Content\", function () {\r",
+							"    pm.response.to.have.status(204);\r",
+							"})\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Token {{tokenConduit}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/articles/{{slugConduit}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"articles",
+						"{{slugConduit}}"
+					]
+				},
+				"description": "**Purpose:**  \n  \nDelete a specific article previously created by the authenticated user.\n\n**What happens here:**\n\n- The request uses the article `slug` (`slugConduit`) and the user's authentication token.\n    \n- The API processes the deletion and returns an empty response indicating successful removal.\n    \n\n**Tests:**\n\n- Verify the response status code is `204 No Content`, confirming the article has been successfully deleted"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "password",
+			"value": ""
+		},
+		{
+			"key": "usernameConduit",
+			"value": ""
+		},
+		{
+			"key": "emailConduit",
+			"value": ""
+		},
+		{
+			"key": "tokenConduit",
+			"value": ""
+		},
+		{
+			"key": "slugConduit",
+			"value": ""
+		},
+		{
+			"key": "commentID",
+			"value": ""
+		},
+		{
+			"key": "baseURL",
+			"value": ""
+		}
+	]
+}
